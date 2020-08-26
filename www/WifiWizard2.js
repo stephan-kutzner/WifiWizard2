@@ -159,10 +159,12 @@ var WifiWizard2 = {
             }
 
             WifiWizard2.add(wifiConfig).then(function (newNetID) {
-
-                // Successfully updated or added wifiConfig
-                cordova.exec(resolve, reject, "WifiWizard2", "connect", [WifiWizard2.formatWifiString(SSID), bindAll]);
-
+                 if(device.platform === "Android" && parseInt(device.version.split('.')[0]) >= 10){
+                     // New method for Android Q does not support it add method already brings up dialog to join network
+                } else {
+                    // Successfully updated or added wifiConfig
+                    cordova.exec(resolve, reject, "WifiWizard2", "connect", [WifiWizard2.formatWifiString(SSID), bindAll]);
+                }
                 // Catch error adding/updating network
             }).catch(function (error) {
 
