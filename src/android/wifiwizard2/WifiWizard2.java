@@ -24,6 +24,10 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import android.app.AlertDialog;
+import android.content.ClipData;
+import android.content.ClipboardManager;
+import android.content.DialogInterface;
 import android.content.pm.PackageManager;
 import android.content.BroadcastReceiver;
 import android.content.Intent;
@@ -48,6 +52,7 @@ import android.net.NetworkSpecifier;
 
 import android.content.Context;
 import android.os.AsyncTask;
+import android.provider.Settings;
 import android.util.Log;
 import android.os.Build.VERSION;
 import android.os.PatternMatcher;
@@ -470,15 +475,30 @@ public class WifiWizard2 extends CordovaPlugin {
           public void onAvailable(Network network) {
             Log.d(TAG, "in availble");
             Log.d(TAG, network.toString());
-            if (API_VERSION >= 23) {
-              connectivityManager.bindProcessToNetwork(network);
-            } else {
-              connectivityManager.setProcessDefaultNetwork(network);
-            }
+            connectivityManager.bindProcessToNetwork(network);
           }
           @Override
           public void onLost(Network network) {
             Log.d(TAG, "in Lost");
+            connectivityManager.bindProcessToNetwork(null);
+            connectivityManager.unregisterNetworkCallback(networkCallback);
+            AlertDialog.Builder alert = new AlertDialog.Builder(cordova.getActivity());
+            alert.setTitle("Error Auto Connecting");
+            alert.setMessage("Lets manually connect to probe  " + newSSID + ", the password is copied to the clipboard. You will be taken to Wi-Fi Settings. ");
+            alert.setPositiveButton("OK",
+              new DialogInterface.OnClickListener() {
+                public void onClick(DialogInterface dialog, int id) {
+                  ClipboardManager clipboard = (ClipboardManager) cordova.getActivity().getSystemService(Context.CLIPBOARD_SERVICE);
+                  ClipData clip = ClipData.newPlainText("VavePassword", newPass);
+                  clipboard.setPrimaryClip(clip);
+
+                  Context context =  cordova.getActivity().getApplicationContext();
+                  Intent intent = new Intent(Settings.ACTION_WIFI_SETTINGS);
+                  intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                  context.startActivity(intent);
+                }
+              });
+            alert.show();
           }
         };
 
@@ -504,7 +524,6 @@ public class WifiWizard2 extends CordovaPlugin {
         NetworkRequest nr = networkRequestBuilder1.build();
         ConnectivityManager cm = (ConnectivityManager) cordova.getActivity().getApplicationContext().getSystemService(Context.CONNECTIVITY_SERVICE);
         cm.requestNetwork(nr, this.networkCallback);
-        callbackContext.success( newSSID );
       } else {
         // After processing authentication types, add or update network
         if(wifi.networkId == -1) { // -1 means SSID configuration does not exist yet
