@@ -479,7 +479,7 @@ public class WifiWizard2 extends CordovaPlugin {
             connectivityManager.unregisterNetworkCallback(networkCallback);
             AlertDialog.Builder alert = new AlertDialog.Builder(cordova.getActivity());
             alert.setTitle("Error Auto Connecting");
-            alert.setMessage("Lets manually connect to probe  " + newSSID + "  the password is copied to you clipboard. You will be taken to Wi-fi Settings. ");
+            alert.setMessage("Lets manually connect to probe  " + newSSID + ", the password is copied to the clipboard. You will be taken to Wi-Fi Settings. ");
             alert.setPositiveButton("OK",
               new DialogInterface.OnClickListener() {
                 public void onClick(DialogInterface dialog, int id) {
