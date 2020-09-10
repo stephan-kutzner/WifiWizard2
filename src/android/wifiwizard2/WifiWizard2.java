@@ -483,6 +483,7 @@ public class WifiWizard2 extends CordovaPlugin {
             connectivityManager.bindProcessToNetwork(null);
             connectivityManager.unregisterNetworkCallback(networkCallback);
             AlertDialog.Builder alert = new AlertDialog.Builder(cordova.getActivity());
+            alert.setCancelable(true);
             alert.setTitle("Error Auto Connecting");
             alert.setMessage("Lets manually connect to probe  " + newSSID + ", the password is copied to the clipboard. You will be taken to Wi-Fi Settings. ");
             alert.setPositiveButton("OK",
@@ -498,7 +499,17 @@ public class WifiWizard2 extends CordovaPlugin {
                   context.startActivity(intent);
                 }
               });
-            alert.show();
+            alert.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+              public void onClick(DialogInterface dialog, int which) {
+              }
+            });
+            
+            WifiManager mWifiManager = (WifiManager) cordova.getActivity().getApplicationContext().getSystemService(Context.WIFI_SERVICE);
+            assert mWifiManager != null;
+            WifiInfo info = mWifiManager.getConnectionInfo();
+            if(!info.getSSID().equals(newSSID)) {
+              alert.show();
+            }
           }
         };
 
