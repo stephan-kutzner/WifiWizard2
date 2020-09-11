@@ -504,7 +504,7 @@ public class WifiWizard2 extends CordovaPlugin {
               }
             });
             
-            WifiManager mWifiManager = (WifiManager) context.getApplicationContext().getSystemService(Context.WIFI_SERVICE);
+            WifiManager mWifiManager = (WifiManager) cordova.getActivity().getApplicationContext().getSystemService(Context.WIFI_SERVICE);
             assert mWifiManager != null;
             WifiInfo info = mWifiManager.getConnectionInfo();
             if(!info.getSSID().equals(newSSID)) {
