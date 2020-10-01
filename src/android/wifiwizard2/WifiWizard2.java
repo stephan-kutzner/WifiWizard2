@@ -476,6 +476,7 @@ public class WifiWizard2 extends CordovaPlugin {
             Log.d(TAG, "in availble");
             Log.d(TAG, network.toString());
             connectivityManager.bindProcessToNetwork(network);
+            callbackContext.success("NETWORK_CONNECTION_COMPLETED");
           }
           @Override
           public void onLost(Network network) {
