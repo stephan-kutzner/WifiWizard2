@@ -126,7 +126,7 @@ public class WifiWizard2 extends CordovaPlugin {
 
   private final BroadcastReceiver networkChangedReceiver = new NetworkChangedReceiver();
   private static final IntentFilter NETWORK_STATE_CHANGED_FILTER = new IntentFilter();
-  private static boolean isConnecting = false;
+  private static long connectionTime;
 
   static {
     NETWORK_STATE_CHANGED_FILTER.addAction(WifiManager.NETWORK_STATE_CHANGED_ACTION);
@@ -374,7 +374,6 @@ public class WifiWizard2 extends CordovaPlugin {
   private boolean add(CallbackContext callbackContext, JSONArray data) {
 
     Log.d(TAG, "WifiWizard2: add entered.");
-    isConnecting = true;
     // Initialize the WifiConfiguration object
     WifiConfiguration wifi = new WifiConfiguration();
 
@@ -475,8 +474,8 @@ public class WifiWizard2 extends CordovaPlugin {
           @Override
           public void onAvailable(Network network) {
             Log.d(TAG, "in availble");
-            isConnecting = false;
             Log.d(TAG, network.toString());
+            connectionTime = System.currentTimeMillis();
             connectivityManager.bindProcessToNetwork(network);
             callbackContext.success("NETWORK_CONNECTION_COMPLETED");
           }
@@ -513,9 +512,13 @@ public class WifiWizard2 extends CordovaPlugin {
                   WifiManager mWifiManager = (WifiManager) cordova.getActivity().getApplicationContext().getSystemService(Context.WIFI_SERVICE);
                   assert mWifiManager != null;
                   WifiInfo info = mWifiManager.getConnectionInfo();
-                  if(!info.getSSID().equals(newSSID) && isConnecting) {
-                    alert.show();
-                    isConnecting = false;
+                  long tEnd = System.currentTimeMillis();
+                  long tDelta = tEnd - connectionTime;
+                  double elapsedSeconds = tDelta / 1000.0;
+                  if(elapsedSeconds < 15) {
+                    if(!info.getSSID().equals(newSSID)) {
+                      alert.show();
+                    }
                   }
                 }
               },
