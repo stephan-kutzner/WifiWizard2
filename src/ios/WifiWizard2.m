@@ -3,6 +3,8 @@
 #import <net/if.h>
 #import <SystemConfiguration/CaptiveNetwork.h>
 #import <NetworkExtension/NetworkExtension.h>  
+#include <sys/socket.h>
+#include <netinet/in.h> 
 
 @implementation WifiWizard2
 
@@ -327,6 +329,63 @@
     
     [self.commandDelegate sendPluginResult:pluginResult
                                 callbackId:command.callbackId];
+}
+
+- (void)iOSNetworkPermission:(CDVInvokedUrlCommand*)command {
+    CDVPluginResult *pluginResult = nil;
+    NSString *result = [self triggerLocalNetworkPrivacyAlertObjC] ? @"1" : @"0";
+
+    pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString:result];
+
+    [self.commandDelegate sendPluginResult:pluginResult
+                                callbackId:command.callbackId];
+}
+
+static NSArray<NSData *> * addressesOfDiscardServiceOnBroadcastCapableInterfaces(void) {
+    struct ifaddrs * addrList = NULL;
+    int err = getifaddrs(&addrList);
+    if (err != 0) {
+        return @[];
+    }
+    NSMutableArray<NSData *> * result = [NSMutableArray array];
+    for (struct ifaddrs * cursor = addrList; cursor != NULL; cursor = cursor->ifa_next) {
+        if ( (cursor->ifa_flags & IFF_BROADCAST) &&
+             (cursor->ifa_addr != NULL)
+           ) {
+            switch (cursor->ifa_addr->sa_family) {
+            case AF_INET: {
+                struct sockaddr_in sin = *(struct sockaddr_in *) cursor->ifa_addr;
+                sin.sin_port = htons(9);
+                NSData * addr = [NSData dataWithBytes:&sin length:sizeof(sin)];
+                [result addObject:addr];
+            } break;
+            case AF_INET6: {
+                struct sockaddr_in6 sin6 = *(struct sockaddr_in6 *) cursor->ifa_addr;
+                sin6.sin6_port = htons(9);
+                NSData * addr = [NSData dataWithBytes:&sin6 length:sizeof(sin6)];
+                [result addObject:addr];
+            } break;
+            default: {
+                // do nothing
+            } break;
+            }
+        }
+    }
+    freeifaddrs(addrList);
+    return result;
+}
+- (BOOL)  triggerLocalNetworkPrivacyAlertObjC {
+    int sock4 = socket(AF_INET, SOCK_DGRAM, 0);
+    int sock6 = socket(AF_INET, SOCK_DGRAM, 0);
+    
+    if ((sock4 >= 0) && (sock6 >= 0)) {
+        char message = '!';
+        NSArray<NSData *> * addresses = addressesOfDiscardServiceOnBroadcastCapableInterfaces();
+        for (NSData * address in addresses) {
+            int sock = ((const struct sockaddr *) address.bytes)->sa_family == AF_INET ? sock4 : sock6;
+            (void) sendto(sock, &message, sizeof(message), MSG_DONTWAIT, address.bytes, (socklen_t) address.length);
+        }
+    }
 }
 
 
