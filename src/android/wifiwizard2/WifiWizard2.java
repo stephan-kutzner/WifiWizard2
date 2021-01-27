@@ -483,6 +483,11 @@ public class WifiWizard2 extends CordovaPlugin {
                     }
 
           @Override
+          public void onUnavailable() {
+            callbackContext.error("NETWORK_UNAVAILABLE");
+          }
+
+          @Override
           public void onAvailable(Network network) {
             Log.d(TAG, "in availble");
             Log.d(TAG, network.toString());
