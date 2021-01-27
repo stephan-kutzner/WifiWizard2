@@ -471,6 +471,7 @@ public class WifiWizard2 extends CordovaPlugin {
 
       if(API_VERSION >= 29) {
         networkCallback = new ConnectivityManager.NetworkCallback() {
+
           @Override
           public void onAvailable(Network network) {
             Log.d(TAG, "in availble");
@@ -505,7 +506,7 @@ public class WifiWizard2 extends CordovaPlugin {
               public void onClick(DialogInterface dialog, int which) {
               }
             });
-            
+
             new android.os.Handler().postDelayed(
               new Runnable() {
                 public void run() {
@@ -528,7 +529,9 @@ public class WifiWizard2 extends CordovaPlugin {
 
         WifiNetworkSpecifier.Builder builder = new WifiNetworkSpecifier.Builder();
         builder.setSsid(newSSID);
-        builder.setWpa2Passphrase(newPass);
+        if(authType.equals("WPA")){
+          builder.setWpa2Passphrase(newPass);
+        }
 
         WifiNetworkSpecifier wifiNetworkSpecifier = builder.build();
 
