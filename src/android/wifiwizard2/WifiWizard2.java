@@ -488,47 +488,47 @@ public class WifiWizard2 extends CordovaPlugin {
                     @Override
                     public void onLost(Network network) {
                         Log.d(TAG, "in Lost");
-                        connectivityManager.bindProcessToNetwork(null);
-                        connectivityManager.unregisterNetworkCallback(networkCallback);
-                        AlertDialog.Builder alert = new AlertDialog.Builder(cordova.getActivity());
-                        alert.setCancelable(true);
-                        alert.setTitle("Error Auto Connecting");
-                        alert.setMessage("Lets manually connect to probe  " + newSSID + ", the password is copied to the clipboard. You will be taken to Wi-Fi Settings. ");
-                        alert.setPositiveButton("OK",
-                                new DialogInterface.OnClickListener() {
-                                    public void onClick(DialogInterface dialog, int id) {
-                                        ClipboardManager clipboard = (ClipboardManager) cordova.getActivity().getSystemService(Context.CLIPBOARD_SERVICE);
-                                        ClipData clip = ClipData.newPlainText("VavePassword", newPass);
-                                        clipboard.setPrimaryClip(clip);
+                        // connectivityManager.bindProcessToNetwork(null);
+                        // connectivityManager.unregisterNetworkCallback(networkCallback);
+                        // AlertDialog.Builder alert = new AlertDialog.Builder(cordova.getActivity());
+                        // alert.setCancelable(true);
+                        // alert.setTitle("Error Auto Connecting");
+                        // alert.setMessage("Lets manually connect to probe  " + newSSID + ", the password is copied to the clipboard. You will be taken to Wi-Fi Settings. ");
+                        // alert.setPositiveButton("OK",
+                        //         new DialogInterface.OnClickListener() {
+                        //             public void onClick(DialogInterface dialog, int id) {
+                        //                 ClipboardManager clipboard = (ClipboardManager) cordova.getActivity().getSystemService(Context.CLIPBOARD_SERVICE);
+                        //                 ClipData clip = ClipData.newPlainText("VavePassword", newPass);
+                        //                 clipboard.setPrimaryClip(clip);
 
-                                        Context context = cordova.getActivity().getApplicationContext();
-                                        Intent intent = new Intent(Settings.ACTION_WIFI_SETTINGS);
-                                        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                                        context.startActivity(intent);
-                                    }
-                                });
-                        alert.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
-                            public void onClick(DialogInterface dialog, int which) {
-                            }
-                        });
+                        //                 Context context = cordova.getActivity().getApplicationContext();
+                        //                 Intent intent = new Intent(Settings.ACTION_WIFI_SETTINGS);
+                        //                 intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                        //                 context.startActivity(intent);
+                        //             }
+                        //         });
+                        // alert.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+                        //     public void onClick(DialogInterface dialog, int which) {
+                        //     }
+                        // });
 
-                        new android.os.Handler().postDelayed(
-                                new Runnable() {
-                                    public void run() {
-                                        WifiManager mWifiManager = (WifiManager) cordova.getActivity().getApplicationContext().getSystemService(Context.WIFI_SERVICE);
-                                        assert mWifiManager != null;
-                                        WifiInfo info = mWifiManager.getConnectionInfo();
-                                        long tEnd = System.currentTimeMillis();
-                                        long tDelta = tEnd - connectionTime;
-                                        double elapsedSeconds = tDelta / 1000.0;
-                                        if (elapsedSeconds < 15) {
-                                            if (!info.getSSID().equals(newSSID)) {
-                                                alert.show();
-                                            }
-                                        }
-                                    }
-                                },
-                                5000);
+                        // new android.os.Handler().postDelayed(
+                        //         new Runnable() {
+                        //             public void run() {
+                        //                 WifiManager mWifiManager = (WifiManager) cordova.getActivity().getApplicationContext().getSystemService(Context.WIFI_SERVICE);
+                        //                 assert mWifiManager != null;
+                        //                 WifiInfo info = mWifiManager.getConnectionInfo();
+                        //                 long tEnd = System.currentTimeMillis();
+                        //                 long tDelta = tEnd - connectionTime;
+                        //                 double elapsedSeconds = tDelta / 1000.0;
+                        //                 if (elapsedSeconds < 15) {
+                        //                     if (!info.getSSID().equals(newSSID)) {
+                        //                         alert.show();
+                        //                     }
+                        //                 }
+                        //             }
+                        //         },
+                        //         5000);
                     }
                 };
 
