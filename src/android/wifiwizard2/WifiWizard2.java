@@ -776,18 +776,18 @@ public class WifiWizard2 extends CordovaPlugin {
      * @param callbackContext A Cordova callback context
      * @param data            JSON Array, with [0] being SSID to connect
      */
-    private void connect(CallbackContext callbackContext, JSONArray data) {
+    private void connect(final CallbackContext callbackContext, JSONArray data) {
         Log.d(TAG, "WifiWizard2: connect entered.");
-
+    
         if (!validateData(data)) {
             callbackContext.error("CONNECT_INVALID_DATA");
             Log.d(TAG, "WifiWizard2: connect invalid data.");
             return;
         }
-
+    
         String ssidToConnect = "";
         String bindAll = "false";
-
+    
         try {
             ssidToConnect = data.getString(0);
             bindAll = data.getString(1);
@@ -796,39 +796,66 @@ public class WifiWizard2 extends CordovaPlugin {
             Log.d(TAG, e.getMessage());
             return;
         }
-
-        int networkIdToConnect = ssidToNetworkId(ssidToConnect);
-
-        if (networkIdToConnect > -1) {
-            // We disable the network before connecting, because if this was the last connection before
-            // a disconnect(), this will not reconnect.
-
-            Log.d(TAG, "Valid networkIdToConnect: attempting connection");
-
-            // Bind all requests to WiFi network (only necessary for Lollipop+ - API 21+)
-            if (bindAll.equals("true")) {
-                registerBindALL(networkIdToConnect);
-            }
-
-            if (API_VERSION >= 26) {
-//                wifiManager.disconnect();
-            } else {
-                wifiManager.disableNetwork(networkIdToConnect);
-            }
-
-            wifiManager.enableNetwork(networkIdToConnect, true);
-
-            if (API_VERSION >= 26) {
-//        wifiManager.reassociate();
-            }
-
-            new ConnectAsync().execute(callbackContext, networkIdToConnect);
-            return;
-
-        } else {
+    
+        final int networkIdToConnect = ssidToNetworkId(ssidToConnect);
+    
+        if (networkIdToConnect < 0) {
             callbackContext.error("INVALID_NETWORK_ID_TO_CONNECT");
             return;
         }
+    
+        Log.d(TAG, "Valid networkIdToConnect: attempting connection");
+    
+        // Bind all requests to Wi-Fi network (only for API 21+)
+        if (bindAll.equals("true") && Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            registerBindALL(networkIdToConnect);
+        }
+    
+        if (Build.VERSION.SDK_INT < 26) {
+            // Pre-API 26: old behavior
+            wifiManager.disableNetwork(networkIdToConnect);
+            wifiManager.enableNetwork(networkIdToConnect, true);
+            new ConnectAsync().execute(callbackContext, networkIdToConnect);
+        } else {
+            // API 26+: use ConnectivityManager.NetworkCallback
+            wifiManager.enableNetwork(networkIdToConnect, true);
+    
+            final ConnectivityManager cm = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
+            final NetworkRequest request = new NetworkRequest.Builder()
+                    .addTransportType(NetworkCapabilities.TRANSPORT_WIFI)
+                    .build();
+    
+            final ConnectivityManager.NetworkCallback networkCallback = new ConnectivityManager.NetworkCallback() {
+                @Override
+                public void onAvailable(@NonNull Network network) {
+                    NetworkCapabilities nc = cm.getNetworkCapabilities(network);
+                    if (nc != null && nc.hasTransport(NetworkCapabilities.TRANSPORT_WIFI)) {
+                        WifiInfo wifiInfo = wifiManager.getConnectionInfo();
+                        if (wifiInfo != null && ssidToConnect.equals(stripQuotes(wifiInfo.getSSID()))) {
+                            callbackContext.success(ssidToConnect);
+                            cm.unregisterNetworkCallback(this);
+                        }
+                    }
+                }
+    
+                @Override
+                public void onLost(@NonNull Network network) {
+                    // Optional: notify disconnect
+                    callbackContext.error("Wi-Fi disconnected");
+                    cm.unregisterNetworkCallback(this);
+                }
+            };
+    
+            cm.registerNetworkCallback(request, networkCallback);
+        }
+    }
+
+    private String stripQuotes(String ssid) {
+        if (ssid == null) return null;
+        if (ssid.startsWith("\"") && ssid.endsWith("\"")) {
+            return ssid.substring(1, ssid.length() - 1);
+        }
+        return ssid;
     }
 
     /**
