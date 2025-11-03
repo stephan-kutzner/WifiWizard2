@@ -778,16 +778,16 @@ public class WifiWizard2 extends CordovaPlugin {
      */
     private void connect(final CallbackContext callbackContext, JSONArray data) {
         Log.d(TAG, "WifiWizard2: connect entered.");
-    
+
         if (!validateData(data)) {
             callbackContext.error("CONNECT_INVALID_DATA");
             Log.d(TAG, "WifiWizard2: connect invalid data.");
             return;
         }
-    
-        String ssidToConnect = "";
+
+        final String ssidToConnect;
         String bindAll = "false";
-    
+
         try {
             ssidToConnect = data.getString(0);
             bindAll = data.getString(1);
@@ -796,22 +796,22 @@ public class WifiWizard2 extends CordovaPlugin {
             Log.d(TAG, e.getMessage());
             return;
         }
-    
+
         final int networkIdToConnect = ssidToNetworkId(ssidToConnect);
-    
+
         if (networkIdToConnect < 0) {
             callbackContext.error("INVALID_NETWORK_ID_TO_CONNECT");
             return;
         }
-    
+
         Log.d(TAG, "Valid networkIdToConnect: attempting connection");
-    
+
         // Bind all requests to Wi-Fi network (only for API 21+)
-        if (bindAll.equals("true") && Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+        if (bindAll.equals("true") && VERSION.SDK_INT >= 21) {
             registerBindALL(networkIdToConnect);
         }
-    
-        if (Build.VERSION.SDK_INT < 26) {
+
+        if (VERSION.SDK_INT < 26) {
             // Pre-API 26: old behavior
             wifiManager.disableNetwork(networkIdToConnect);
             wifiManager.enableNetwork(networkIdToConnect, true);
@@ -819,15 +819,15 @@ public class WifiWizard2 extends CordovaPlugin {
         } else {
             // API 26+: use ConnectivityManager.NetworkCallback
             wifiManager.enableNetwork(networkIdToConnect, true);
-    
-            final ConnectivityManager cm = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
+
+            final ConnectivityManager cm = (ConnectivityManager) cordova.getActivity().getSystemService(Context.CONNECTIVITY_SERVICE);
             final NetworkRequest request = new NetworkRequest.Builder()
                     .addTransportType(NetworkCapabilities.TRANSPORT_WIFI)
                     .build();
-    
+
             final ConnectivityManager.NetworkCallback networkCallback = new ConnectivityManager.NetworkCallback() {
                 @Override
-                public void onAvailable(@NonNull Network network) {
+                public void onAvailable(Network network) {
                     NetworkCapabilities nc = cm.getNetworkCapabilities(network);
                     if (nc != null && nc.hasTransport(NetworkCapabilities.TRANSPORT_WIFI)) {
                         WifiInfo wifiInfo = wifiManager.getConnectionInfo();
@@ -837,15 +837,14 @@ public class WifiWizard2 extends CordovaPlugin {
                         }
                     }
                 }
-    
+
                 @Override
-                public void onLost(@NonNull Network network) {
-                    // Optional: notify disconnect
+                public void onLost(Network network) {
                     callbackContext.error("Wi-Fi disconnected");
                     cm.unregisterNetworkCallback(this);
                 }
             };
-    
+
             cm.registerNetworkCallback(request, networkCallback);
         }
     }
