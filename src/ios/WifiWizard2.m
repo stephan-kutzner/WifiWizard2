@@ -96,7 +96,7 @@
                                            passphrase:passwordString
                                                 isWEP:NO];
 
-    configuration.joinOnce = YES;
+    configuration.joinOnce = NO;
 
     [[NEHotspotConfigurationManager sharedManager]
      applyConfiguration:configuration
