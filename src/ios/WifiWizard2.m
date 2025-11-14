@@ -157,19 +157,20 @@
 }
 
 - (void)getConnectedSSID:(CDVInvokedUrlCommand*)command {
-    CDVPluginResult *pluginResult = nil;
-    NSDictionary *r = [self fetchSSIDInfo];
+    [NEHotspotNetwork fetchCurrentWithCompletionHandler:^(NEHotspotNetwork *network) {
+        CDVPluginResult *result;
 
-    NSString *ssid = [r objectForKey:(id)kCNNetworkInfoKeySSID]; //@"SSID"
+        if (network && network.SSID.length > 0) {
+            result = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK
+                                        messageAsString:network.SSID];
+        } else {
+            result = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR
+                                        messageAsString:@"Not available"];
+        }
 
-    if (ssid && [ssid length]) {
-        pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString:ssid];
-    } else {
-        pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString:@"Not available"];
-    }
-
-    [self.commandDelegate sendPluginResult:pluginResult
-                                callbackId:command.callbackId];
+        [self.commandDelegate sendPluginResult:result
+                                    callbackId:command.callbackId];
+    }];
 }
 
 - (void)getConnectedBSSID:(CDVInvokedUrlCommand*)command {
