@@ -1572,12 +1572,12 @@ public class WifiWizard2 extends CordovaPlugin {
     public void onRequestPermissionResult(int requestCode, String[] permissions, int[] grantResults)
             throws JSONException {
 
-        for (int r : grantResults) {
-            if (r == PackageManager.PERMISSION_DENIED) {
-                callbackContext.error("PERMISSION_DENIED");
-                return;
-            }
-        }
+        // for (int r : grantResults) {
+        //     if (r == PackageManager.PERMISSION_DENIED) {
+        //         callbackContext.error("PERMISSION_DENIED");
+        //         return;
+        //     }
+        // }
 
         switch (requestCode) {
             case SCAN_RESULTS_CODE:
